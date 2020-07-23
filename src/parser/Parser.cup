@@ -1,0 +1,138 @@
+/*****************************************************************
+ * Parser.java
+ * 
+ * Copyright ©2020 Ronald Berdúo. All Rights Reserved.
+ * This software is the proprietary information of Ronald Berdúo.
+ *
+ *****************************************************************/
+package parser;
+
+import ast.Ast;
+import ast.AstNode;
+import ast.expression.Expression;
+import ast.expression.Literal;
+import ast.statement.Print;
+import ast.type.PrimitiveType;
+import java.util.ArrayList;
+import java_cup.runtime.ComplexSymbolFactory;
+import java_cup.runtime.ComplexSymbolFactory.Location;
+
+import lexer.Lexer;
+
+/**
+ *
+ * @author Ronald Berdúo
+ */
+parser code {:
+    /**
+     * Nombre del archivo que se esta analizando
+     */
+    private String filename;
+
+    /**
+     * Constructor del analizador sintactico
+     *
+     * @param scann  Analizador lexico
+     * @param sf     Fabrica de simbolos
+     */
+    public Parser(Lexer scann, ComplexSymbolFactory sf, String filename) {
+        super(scann, sf);
+        this.filename = filename;
+    }
+:};
+
+/* Terminales (tokens devueltos por el escáner). */
+
+/* Palabras claves */
+terminal CONTINUE, FUNCTION, DEFAULT, RETURN, SWITCH, BREAK, WHILE, CASE, ELSE, FOR, DO, IF;
+
+/* Literales */
+terminal Integer LIT_ENTERO;
+terminal Double  LIT_DECIMAL;
+terminal Boolean LIT_BOOLEANO;
+terminal String  LIT_STRING;
+terminal String  ID;
+terminal String  NULL;
+
+/* Separadores */
+terminal IGUAL_QUE, DIFERENTE_QUE, MAYOR_IGUAL_QUE, MENOR_IGUAL_QUE, MODULO,
+MAS, MENOS, MULT, DIV, POTENCIA, IGUAL, MAYOR_QUE, MENOR_QUE, INTERROGANTE,
+DOS_PUNTOS, OR, AND, NOT, PAR_IZQ, PAR_DER, COR_IZQ, COR_DER, PUNTO_COMA,
+PUNTO, COMA, LLAVE_IZQ, LLAVE_DER, UMENOS, PRINT, PRINTLN;
+
+
+/* No Terminales */
+non terminal Ast compilation_unit;
+non terminal ArrayList<AstNode> global_statements;
+non terminal AstNode global_statement;
+non terminal Print print_statement;
+non terminal Expression expression;
+
+                                /* Precedencias */
+
+/*Asociatividad */ /* Operador */                                           /* Nivel */
+precedence right    IGUAL;                                                  // 1
+precedence right    INTERROGANTE, DOS_PUNTOS;                               // 2
+precedence left     OR;                                                     // 3
+precedence left     AND;                                                    // 4
+precedence left     DIFERENTE_QUE, IGUAL_QUE;                               // 5
+precedence nonassoc MAYOR_IGUAL_QUE, MAYOR_QUE, MENOR_IGUAL_QUE, MENOR_QUE; // 6
+precedence left     MAS, MENOS;                                             // 7
+precedence left     MULT, DIV, MODULO;                                      // 8
+precedence left     POTENCIA;                                               // 9
+precedence right    UMENOS, NOT;                                            // 10;
+precedence left     COR_IZQ, COR_DER, PAR_IZQ, PAR_DER;                     // 11;
+
+
+/* Reglas gramaticales */
+start with compilation_unit;
+
+
+compilation_unit
+    ::= global_statements:list {:
+        RESULT = new Ast(filename, list);
+    :}
+;
+
+global_statements
+    ::= global_statements:list global_statement:stm {:
+        RESULT = list;
+        RESULT.add(stm);
+    :}
+    | global_statement:stm {:
+        RESULT = new ArrayList<>();
+        RESULT.add(stm);
+    :}
+;
+
+global_statement
+    ::= print_statement:stm {: RESULT = stm; :}
+;
+
+print_statement
+    ::= PRINT:print PAR_IZQ expression:exp PAR_DER PUNTO_COMA {:
+        RESULT = new Print(printxleft, printxright, exp, false);
+    :}
+    |   PRINTLN:print PAR_IZQ expression:exp PAR_DER PUNTO_COMA {:
+        RESULT = new Print(printxleft, printxright, exp, true);
+    :}
+;
+
+expression
+    ::= LIT_ENTERO:lit {:
+        RESULT = new Literal(litxleft, litxright, PrimitiveType.INTEGER, lit);
+    :}
+    |   LIT_DECIMAL:lit {:
+        RESULT = new Literal(litxleft, litxright, PrimitiveType.DOUBLE, lit);
+    :}
+    |   LIT_BOOLEANO:lit {:
+        RESULT = new Literal(litxleft, litxright, PrimitiveType.BOOLEAN, lit);
+    :}
+    |   LIT_STRING:lit {:
+        RESULT = new Literal(litxleft, litxright, PrimitiveType.STRING, lit);
+    :}
+    |   ID {::}
+    |   NULL {::}
+;
+
+
