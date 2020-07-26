@@ -11,6 +11,7 @@ import ast.Ast;
 import ast.AstNode;
 import ast.expression.Expression;
 import ast.expression.Literal;
+import ast.expression.operation.Arithmetic;
 import ast.statement.Print;
 import ast.type.PrimitiveType;
 import java.util.ArrayList;
@@ -119,7 +120,22 @@ print_statement
 ;
 
 expression
-    ::= LIT_ENTERO:lit {:
+    ::= expression:exp1 MAS:op expression:exp2 {:
+        RESULT = new Arithmetic(opxleft, opxright, exp1, exp2, Arithmetic.Operator.ADDITION);
+    :}
+    | expression:exp1 MENOS:op expression:exp2 {:
+        RESULT = new Arithmetic(opxleft, opxright, exp1, exp2, Arithmetic.Operator.SUBTRACTION);
+    :}
+    | expression:exp1 MULT:op expression:exp2 {:
+        RESULT = new Arithmetic(opxleft, opxright, exp1, exp2, Arithmetic.Operator.MULTIPLICATION);
+    :}
+    | expression:exp1 DIV:op expression:exp2 {:
+        RESULT = new Arithmetic(opxleft, opxright, exp1, exp2, Arithmetic.Operator.DIVISION);
+    :}
+    | expression:exp1 MODULO:op expression:exp2 {:
+        RESULT = new Arithmetic(opxleft, opxright, exp1, exp2, Arithmetic.Operator.MODULE);
+    :}
+    | LIT_ENTERO:lit {:
         RESULT = new Literal(litxleft, litxright, PrimitiveType.INTEGER, lit);
     :}
     |   LIT_DECIMAL:lit {:

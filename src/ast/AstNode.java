@@ -34,7 +34,7 @@ public abstract class AstNode {
     return right;
   }
 
-  public abstract Object interpret(Scope scope);
+  public abstract Object interpret(Scope scope) throws Exception;
 
   public abstract void graph(StringBuilder builder);
 
